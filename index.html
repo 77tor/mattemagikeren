@@ -69,12 +69,15 @@
             <button class="mode-btn" onclick="setMaxNum(1000, event)">1000</button>
         </div>
 
-        <!-- Tid per oppgave -->
-        <div class="settings-section">
+<!-- Tid per oppgave -->
+        <div class="settings-section" style="margin-top: 10px;">
             <div class="settings-label">Tid per oppgave:</div>
-            <button class="mode-btn" onclick="setTimeLimit(5, event)">5 sek</button>
-            <button class="mode-btn" onclick="setTimeLimit(7, event)">7 sek</button>
-            <button class="mode-btn active" onclick="setTimeLimit(10, event)">10 sek</button>
+            <div class="time-options">
+                <button class="mode-btn active" onclick="setTimeLimit(4, event)">4 sek</button>
+                <button class="mode-btn" onclick="setTimeLimit(7, event)">7 sek</button>
+                <button class="mode-btn" onclick="setTimeLimit(10, event)">10 sek</button>
+                <button id="noTimeBtn" class="mode-btn hidden" style="display: none;" onclick="setTimeLimit(0, event)">Ingen</button>
+            </div>
         </div>
 
         <button class="btn-main" onclick="startGame()">Start Spillet</button>

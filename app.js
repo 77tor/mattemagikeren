@@ -26,8 +26,8 @@ let actionTimeout = null;
 // Innstillinger
 let currentMode = 'add';
 let selectedMaxNum = 10;
-let baseTimeLimit = 10; 
-let timeLimit = 10;
+let baseTimeLimit = 4; 
+let timeLimit = 4;
 let selectedTables = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 let correctAnswer = 0;
@@ -59,15 +59,19 @@ function setMode(mode, e) {
     setActiveButton(e.target);
 
     const tablesSection = document.getElementById('multiplicationTablesSection');
-    if (mode === 'mul') {
-        tablesSection.classList.remove('hidden');
-    } else {
-        tablesSection.classList.add('hidden');
+    if (tablesSection) {
+        if (mode === 'mul') {
+            tablesSection.classList.remove('hidden');
+        } else {
+            tablesSection.classList.add('hidden');
+        }
     }
 }
 
 function toggleTable(num, e) {
-    const btn = e.target;
+    const btn = e.target.closest('button');
+    if (!btn) return;
+
     if (selectedTables.includes(num)) {
         if (selectedTables.length > 1) {
             selectedTables = selectedTables.filter(t => t !== num);
@@ -85,7 +89,7 @@ function toggleAllTables(e) {
     if (selectedTables.length === 10) {
         selectedTables = [2];
         buttons.forEach(b => b.classList.remove('selected'));
-        buttons[2].classList.add('selected');
+        if (buttons[1]) buttons[1].classList.add('selected'); // Indeks 1 svarer til tall 2
     } else {
         selectedTables = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
         buttons.forEach(b => b.classList.add('selected'));
@@ -95,42 +99,76 @@ function toggleAllTables(e) {
 
 function updateAllTablesBtnState() {
     const allBtn = document.querySelectorAll('.tables-grid .table-btn')[0];
-    if (selectedTables.length === 10) {
-        allBtn.classList.add('selected');
-    } else {
-        allBtn.classList.remove('selected');
+    if (allBtn) {
+        if (selectedTables.length === 10) {
+            allBtn.classList.add('selected');
+        } else {
+            allBtn.classList.remove('selected');
+        }
     }
 }
 
 function setMaxNum(max, e) {
     selectedMaxNum = max;
-    setActiveButton(e.target);
+
+    const btn = e ? (e.target.closest('button') || e.target) : null;
+    if (btn) {
+        setActiveButton(btn);
+    }
+
+    const noTimeBtn = document.getElementById('noTimeBtn') || document.getElementById('noTimeOptionSection');
+    
+    if (noTimeBtn) {
+        if (max >= 100) {
+            noTimeBtn.classList.remove('hidden');
+            noTimeBtn.style.display = ''; 
+        } else {
+            noTimeBtn.classList.add('hidden');
+            noTimeBtn.style.display = 'none';
+
+            // Hvis "Ingen tid" var valgt, tilbakestill til 4 sekunder (som er første knapp)
+            if (baseTimeLimit === 0 || timeLimit === 0) {
+                baseTimeLimit = 4;
+                timeLimit = 4;
+                const firstTimeBtn = document.querySelector('.time-options button');
+                if (firstTimeBtn) setActiveButton(firstTimeBtn);
+            }
+        }
+    }
 }
 
 function setTimeLimit(seconds, e) {
     baseTimeLimit = seconds;
+    timeLimit = seconds;
     setActiveButton(e.target);
 }
 
 function setActiveButton(element) {
-    const parent = element.parentElement;
-    parent.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
-    element.classList.add('active');
+    const btn = element.closest('button');
+    if (!btn) return;
+    const parent = btn.parentElement;
+    if (parent) {
+        parent.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    }
+    btn.classList.add('active');
 }
 
 function updateMenuDisplay() {
-    document.getElementById('menuHighscoreDisplay').innerText = `🏆 REKORD: ${highscore} pt | 💎 ${diamonds}`;
+    const menuDisplay = document.getElementById('menuHighscoreDisplay');
+    if (menuDisplay) {
+        menuDisplay.innerText = `🏆 REKORD: ${highscore} pt | 💎 ${diamonds}`;
+    }
     renderAvatar(getPlayerAvatarId(), '#titleAvatar');
 }
 
 /* BUTIKK FUNKSJONER */
 function openShop() {
     renderShop();
-    document.getElementById('shopScreen').classList.remove('hidden');
+    document.getElementById('shopScreen')?.classList.remove('hidden');
 }
 
 function closeShop() {
-    document.getElementById('shopScreen').classList.add('hidden');
+    document.getElementById('shopScreen')?.classList.add('hidden');
     updateMenuDisplay();
 }
 
@@ -144,32 +182,31 @@ function updateBuffIcons() {
         buffsHTML += `<span class="buff-icon" title="Tids-amulett (+2 sek)">⏳</span>`;
     }
 
-    const menuBuffs = document.getElementById('menuBuffs');
-    const gameBuffs = document.getElementById('gameBuffs');
-    const summaryBuffs = document.getElementById('summaryBuffs');
-    const gameOverBuffs = document.getElementById('gameOverBuffs');
-
-    if (menuBuffs) menuBuffs.innerHTML = buffsHTML;
-    if (gameBuffs) gameBuffs.innerHTML = buffsHTML;
-    if (summaryBuffs) summaryBuffs.innerHTML = buffsHTML;
-    if (gameOverBuffs) gameOverBuffs.innerHTML = buffsHTML;
+    ['menuBuffs', 'gameBuffs', 'summaryBuffs', 'gameOverBuffs'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = buffsHTML;
+    });
 }
 
-
 function renderShop() {
-    document.getElementById('shopDiamondsDisplay').innerText = diamonds;
+    const diamondsEl = document.getElementById('shopDiamondsDisplay');
+    if (diamondsEl) diamondsEl.innerText = diamonds;
 
     // --- TRYLESTAV ---
     const wandCost = 5 * (upgrades.wandLevel + 1);
-    document.getElementById('wandDesc').innerText = upgrades.wandLevel > 0 
-        ? `Nivå ${upgrades.wandLevel}: Gir +${upgrades.wandLevel * 10}% ekstra poeng.` 
-        : `Gir +10% ekstra poeng per nivå.`;
+    const wandDesc = document.getElementById('wandDesc');
+    if (wandDesc) {
+        wandDesc.innerText = upgrades.wandLevel > 0 
+            ? `Nivå ${upgrades.wandLevel}: Gir +${upgrades.wandLevel * 10}% ekstra poeng.` 
+            : `Gir +10% ekstra poeng per nivå.`;
+    }
     
     const btnWand = document.getElementById('btnBuyWand');
-    btnWand.innerText = `Kjøp (${wandCost} 💎)`;
-    btnWand.disabled = diamonds < wandCost;
+    if (btnWand) {
+        btnWand.innerText = `Kjøp (${wandCost} 💎)`;
+        btnWand.disabled = diamonds < wandCost;
+    }
 
-    // Legg til selg-knapp for tryllestav om du har minst 1 nivå
     let btnSellWand = document.getElementById('btnSellWand');
     if (btnSellWand) {
         btnSellWand.style.display = upgrades.wandLevel > 0 ? 'inline-block' : 'none';
@@ -179,45 +216,57 @@ function renderShop() {
     // --- SKJOLD ---
     const btnShield = document.getElementById('btnBuyShield');
     let btnSellShield = document.getElementById('btnSellShield');
+    const shieldDesc = document.getElementById('shieldDesc');
+    
     if (upgrades.shieldBought) {
-        document.getElementById('shieldDesc').innerText = "Kjøpt! Tar 20% mindre skade.";
-        btnShield.style.display = 'none';
+        if (shieldDesc) shieldDesc.innerText = "Kjøpt! Tar 20% mindre skade.";
+        if (btnShield) btnShield.style.display = 'none';
         if (btnSellShield) btnSellShield.style.display = 'inline-block';
     } else {
-        document.getElementById('shieldDesc').innerText = "Tar 20% mindre skade fra feilsvar.";
-        btnShield.style.display = 'inline-block';
-        btnShield.innerText = "8 💎";
-        btnShield.disabled = diamonds < 8;
+        if (shieldDesc) shieldDesc.innerText = "Tar 20% mindre skade fra feilsvar.";
+        if (btnShield) {
+            btnShield.style.display = 'inline-block';
+            btnShield.innerText = "8 💎";
+            btnShield.disabled = diamonds < 8;
+        }
         if (btnSellShield) btnSellShield.style.display = 'none';
     }
 
     // --- HP ---
     const btnHp = document.getElementById('btnBuyHp');
     let btnSellHp = document.getElementById('btnSellHp');
+    const hpDesc = document.getElementById('hpDesc');
+    
     if (upgrades.hpBought) {
-        document.getElementById('hpDesc').innerText = "Kjøpt! Du starter med 120 HP.";
-        btnHp.style.display = 'none';
+        if (hpDesc) hpDesc.innerText = "Kjøpt! Du starter med 120 HP.";
+        if (btnHp) btnHp.style.display = 'none';
         if (btnSellHp) btnSellHp.style.display = 'inline-block';
     } else {
-        document.getElementById('hpDesc').innerText = "Start med 120 HP i stedet for 100.";
-        btnHp.style.display = 'inline-block';
-        btnHp.innerText = "10 💎";
-        btnHp.disabled = diamonds < 10;
+        if (hpDesc) hpDesc.innerText = "Start med 120 HP i stedet for 100.";
+        if (btnHp) {
+            btnHp.style.display = 'inline-block';
+            btnHp.innerText = "10 💎";
+            btnHp.disabled = diamonds < 10;
+        }
         if (btnSellHp) btnSellHp.style.display = 'none';
     }
 
     // --- TID ---
     const btnTime = document.getElementById('btnBuyTime');
     let btnSellTime = document.getElementById('btnSellTime');
+    const timeDesc = document.getElementById('timeDesc');
+    
     if (upgrades.timeBought) {
-        document.getElementById('timeDesc').innerText = "Kjøpt! +2 sekunder på oppgaver.";
-        btnTime.style.display = 'none';
+        if (timeDesc) timeDesc.innerText = "Kjøpt! +2 sekunder på oppgaver.";
+        if (btnTime) btnTime.style.display = 'none';
         if (btnSellTime) btnSellTime.style.display = 'inline-block';
     } else {
-        document.getElementById('timeDesc').innerText = "+2 sekunder ekstra per oppgave.";
-        btnTime.style.display = 'inline-block';
-        btnTime.innerText = "12 💎";
-        btnTime.disabled = diamonds < 12;
+        if (timeDesc) timeDesc.innerText = "+2 sekunder ekstra per oppgave.";
+        if (btnTime) {
+            btnTime.style.display = 'inline-block';
+            btnTime.innerText = "12 💎";
+            btnTime.disabled = diamonds < 12;
+        }
         if (btnSellTime) btnSellTime.style.display = 'none';
     }
 }
@@ -241,7 +290,7 @@ function sellUpgrade(type) {
     saveData();
     renderShop();
     updateMenuDisplay();
-    updateBuffIcons(); // <-- Legg til denne!
+    updateBuffIcons();
 }
 
 function buyUpgrade(type) {
@@ -264,7 +313,7 @@ function buyUpgrade(type) {
 
     saveData();
     renderShop();
-    updateBuffIcons(); // <-- Legg til denne!
+    updateBuffIcons();
 }
 
 function saveData() {
@@ -294,13 +343,12 @@ function resetAllData() {
         
         updateStats();
         updateMenuDisplay();
+        updateBuffIcons();
         closeModalSettings();
     }
 }
 
-// HJELPEFUNKSJON FOR Å DREPE ALLE AKTUELLE TIMERE OG FORSINKELSER
 function stopAllGameTimers() {
-    // 1. Stopp tidsur og forsinkelser
     clearInterval(timerInterval);
     timerInterval = null;
 
@@ -311,25 +359,16 @@ function stopAllGameTimers() {
 
     clearConfetti();
 
-    // 2. Skjul popup-er
     const defeatPopup = document.getElementById('defeatPopup');
     if (defeatPopup) defeatPopup.classList.add('hidden');
 
-    // 3. Stopp risting på spritene
     document.getElementById('playerSprite')?.classList.remove('shake');
     document.getElementById('monsterSprite')?.classList.remove('shake');
 
-    // 4. NULLSTILL OG STOPP POPUP-ANIMASJONER (+35 pt, -10 pt, Diamant-pop)
-    const plusPop = document.getElementById('plusPointsPop');
-    if (plusPop) plusPop.classList.remove('animate');
+    document.getElementById('plusPointsPop')?.classList.remove('animate');
+    document.getElementById('minusPointsPop')?.classList.remove('animate');
+    document.getElementById('diamondBonusPop')?.classList.remove('animate');
 
-    const minusPop = document.getElementById('minusPointsPop');
-    if (minusPop) minusPop.classList.remove('animate');
-
-    const diamondPop = document.getElementById('diamondBonusPop');
-    if (diamondPop) diamondPop.classList.remove('animate');
-
-    // 5. Fjern eventuelle stjerner/partikler/stråler som flyr i arenaen
     const arena = document.getElementById('arenaContainer');
     if (arena) {
         const particles = arena.querySelectorAll('.effect-particle');
@@ -341,71 +380,72 @@ function stopAllGameTimers() {
 }
 
 function openSettings() {
-    // 1. Drep alle aktive tidsur/sekvenser
     stopAllGameTimers();
 
-    // 2. Skjul alle spillskjermer
-    document.getElementById('pauseScreen').classList.add('hidden');
-    document.getElementById('victoryScreen').classList.add('hidden');
-    document.getElementById('gameOverScreen').classList.add('hidden');
+    document.getElementById('pauseScreen')?.classList.add('hidden');
+    document.getElementById('victoryScreen')?.classList.add('hidden');
+    document.getElementById('gameOverScreen')?.classList.add('hidden');
     document.getElementById('shopScreen')?.classList.add('hidden');
     document.getElementById('settingsModalScreen')?.classList.add('hidden');
     document.getElementById('gameScreen')?.classList.add('hidden');
 
-    // 3. Vis startskjermen
-    document.getElementById('startScreen').classList.remove('hidden');
+    document.getElementById('startScreen')?.classList.remove('hidden');
     updateMenuDisplay();
 }
 
 function pauseGame() {
     clearInterval(timerInterval);
     if (actionTimeout) clearTimeout(actionTimeout);
-    document.getElementById('pauseScreen').classList.remove('hidden');
+    document.getElementById('pauseScreen')?.classList.remove('hidden');
 }
 
 function resumeGame() {
-    document.getElementById('pauseScreen').classList.add('hidden');
+    document.getElementById('pauseScreen')?.classList.add('hidden');
     runTimer(); 
 }
 
 function startGame() {
-    // Stopp og nullstill alt av timere, effekter og hengende CSS-animasjoner
     stopAllGameTimers();
 
-    // Sett opp helse, tid og spillstatus
     maxPlayerHp = upgrades.hpBought ? 120 : 100;
     playerHp = maxPlayerHp;
     timeLimit = baseTimeLimit + (upgrades.timeBought ? 2 : 0);
 
-    score = 0; // Nullstill runde-poeng
+    score = 0; 
     streak = 0;
     currentMonsterIndex = 0;
-    monsterSolvedTasks = 0; // Nullstill fremgang på monster
+    monsterSolvedTasks = 0; 
     lastDiamondThreshold = 0;
 
     renderAvatar(getPlayerAvatarId(), '#playerAvatar');
-    updateBuffIcons(); // <-- LEGG TIL DENNE LINJEN HER!
+    updateBuffIcons();
 
-    // Vis/skjul riktige skjermer
-    document.getElementById('startScreen').classList.add('hidden');
-    document.getElementById('gameOverScreen').classList.add('hidden');
-    document.getElementById('victoryScreen').classList.add('hidden');
-    document.getElementById('gameScreen').classList.remove('hidden');
+    document.getElementById('startScreen')?.classList.add('hidden');
+    document.getElementById('gameOverScreen')?.classList.add('hidden');
+    document.getElementById('victoryScreen')?.classList.add('hidden');
+    document.getElementById('gameScreen')?.classList.remove('hidden');
 
-    // Start på helt ny runde
     renderTracker();
     updateStats();
     spawnMonster();
     nextQuestion();
 }
 
+function getAvatarSvgSafe(id) {
+    if (typeof getAvatarSvg === 'function') {
+        return getAvatarSvg(id);
+    }
+    return '👾';
+}
+
 function renderTracker() {
     const tracker = document.getElementById('monsterTracker');
+    if (!tracker) return;
     tracker.innerHTML = '';
     monsters.forEach((m, index) => {
         const node = document.createElement('div');
         node.className = 'tracker-node';
-        node.innerHTML = getAvatarSvg(m.id);
+        node.innerHTML = getAvatarSvgSafe(m.id);
         node.id = `tracker-node-${index}`;
         tracker.appendChild(node);
     });
@@ -447,20 +487,29 @@ function addScore(points) {
 
 function showDiamondBonusPop() {
     const pop = document.getElementById('diamondBonusPop');
-    pop.classList.remove('animate');
-    void pop.offsetWidth;
-    pop.classList.add('animate');
+    if (pop) {
+        pop.classList.remove('animate');
+        void pop.offsetWidth;
+        pop.classList.add('animate');
+    }
 }
 
 function updateStats() {
-    document.getElementById('diamondDisplay').innerText = `💎 ${diamonds}`;
-    document.getElementById('scoreDisplay').innerText = score;
-    document.getElementById('streakDisplay').innerText = streak;
+    const diaEl = document.getElementById('diamondDisplay');
+    if (diaEl) diaEl.innerText = `💎 ${diamonds}`;
     
-    const hpPct = Math.max(0, (playerHp / maxPlayerHp) * 100);
-    document.getElementById('playerHpBar').style.width = hpPct + '%';
+    const scoreEl = document.getElementById('scoreDisplay');
+    if (scoreEl) scoreEl.innerText = score;
     
-    // Oppdater personlig rekord om gjeldende runde slår den
+    const streakEl = document.getElementById('streakDisplay');
+    if (streakEl) streakEl.innerText = streak;
+    
+    const hpBar = document.getElementById('playerHpBar');
+    if (hpBar) {
+        const hpPct = Math.max(0, (playerHp / maxPlayerHp) * 100);
+        hpBar.style.width = hpPct + '%';
+    }
+    
     if (score > highscore) {
         highscore = score;
         saveData();
@@ -472,11 +521,16 @@ function spawnMonster() {
     const currentMonster = monsters[currentMonsterIndex];
     
     const avatarEl = document.getElementById('monsterAvatar');
-    renderAvatar(currentMonster.id, avatarEl);
-    avatarEl.style.opacity = '1';
+    if (avatarEl) {
+        renderAvatar(currentMonster.id, avatarEl);
+        avatarEl.style.opacity = '1';
+    }
 
-    document.getElementById('monsterName').innerText = currentMonster.name;
-    document.getElementById('monsterStep').innerText = `Fiende ${currentMonsterIndex + 1} av ${monsters.length}`;
+    const nameEl = document.getElementById('monsterName');
+    if (nameEl) nameEl.innerText = currentMonster.name;
+
+    const stepEl = document.getElementById('monsterStep');
+    if (stepEl) stepEl.innerText = `Fiende ${currentMonsterIndex + 1} av ${monsters.length}`;
     
     updateMonsterHpBar();
     updateTracker();
@@ -487,12 +541,17 @@ function updateMonsterHpBar() {
     const remainingTasks = currentMonster.requiredTasks - monsterSolvedTasks;
     const percentage = (remainingTasks / currentMonster.requiredTasks) * 100;
     
-    document.getElementById('monsterHpBar').style.width = percentage + '%';
-    document.getElementById('monsterProgressText').innerText = `${monsterSolvedTasks} / ${currentMonster.requiredTasks} oppgaver`;
+    const bar = document.getElementById('monsterHpBar');
+    if (bar) bar.style.width = percentage + '%';
 
-    const opacityRatio = remainingTasks / currentMonster.requiredTasks;
-    const opacityVal = Math.max(0.15, opacityRatio);
-    document.getElementById('monsterAvatar').style.opacity = opacityVal;
+    const text = document.getElementById('monsterProgressText');
+    if (text) text.innerText = `${monsterSolvedTasks} / ${currentMonster.requiredTasks} oppgaver`;
+
+    const avatarEl = document.getElementById('monsterAvatar');
+    if (avatarEl) {
+        const opacityRatio = remainingTasks / currentMonster.requiredTasks;
+        avatarEl.style.opacity = Math.max(0.15, opacityRatio);
+    }
 }
 
 function generateMathProblem() {
@@ -556,6 +615,18 @@ function generateOptions() {
 }
 
 function startTimer() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+    }
+
+    if (timeLimit === 0) {
+        const timerBar = document.getElementById('timerBar');
+        if (timerBar) {
+            timerBar.style.width = '100%';
+        }
+        return; 
+    }
+
     timeLeft = 100;
     runTimer();
 }
@@ -563,6 +634,8 @@ function startTimer() {
 function runTimer() {
     clearInterval(timerInterval);
     const timerBar = document.getElementById('timerBar');
+    if (!timerBar) return;
+
     const tickRate = 50;
     const decrement = (100 / (timeLimit * 1000)) * tickRate;
 
@@ -598,6 +671,8 @@ function nextQuestion() {
 
 function triggerMagicStarsEffect() {
     const arena = document.getElementById('arenaContainer');
+    if (!arena) return;
+
     const starSymbols = ['✨', '⭐', '🌟', '✦', '🔮'];
 
     for (let i = 0; i < 7; i++) {
@@ -621,11 +696,15 @@ function triggerMagicStarsEffect() {
 
 function triggerEnemyRayEffect() {
     const ray = document.getElementById('enemyRay');
-    ray.classList.remove('active');
-    void ray.offsetWidth;
-    ray.classList.add('active');
+    if (ray) {
+        ray.classList.remove('active');
+        void ray.offsetWidth;
+        ray.classList.add('active');
+    }
 
     const arena = document.getElementById('arenaContainer');
+    if (!arena) return;
+
     const sparkSymbols = ['⚡', '💥', '🔥'];
 
     for (let i = 0; i < 4; i++) {
@@ -649,17 +728,21 @@ function triggerEnemyRayEffect() {
 
 function showPlusPointsAnim(earnedPoints) {
     const plusPop = document.getElementById('plusPointsPop');
-    plusPop.innerText = `+${earnedPoints} pt`;
-    plusPop.classList.remove('animate');
-    void plusPop.offsetWidth;
-    plusPop.classList.add('animate');
+    if (plusPop) {
+        plusPop.innerText = `+${earnedPoints} pt`;
+        plusPop.classList.remove('animate');
+        void plusPop.offsetWidth;
+        plusPop.classList.add('animate');
+    }
 }
 
 function showMinusPointsAnim() {
     const minusPop = document.getElementById('minusPointsPop');
-    minusPop.classList.remove('animate');
-    void minusPop.offsetWidth; 
-    minusPop.classList.add('animate');
+    if (minusPop) {
+        minusPop.classList.remove('animate');
+        void minusPop.offsetWidth; 
+        minusPop.classList.add('animate');
+    }
 }
 
 function checkAnswer(selectedButton) {
@@ -679,9 +762,11 @@ function checkAnswer(selectedButton) {
         showPlusPointsAnim(finalEarned);
 
         const monsterSprite = document.getElementById('monsterSprite');
-        monsterSprite.classList.remove('shake');
-        void monsterSprite.offsetWidth;
-        monsterSprite.classList.add('shake');
+        if (monsterSprite) {
+            monsterSprite.classList.remove('shake');
+            void monsterSprite.offsetWidth;
+            monsterSprite.classList.add('shake');
+        }
 
         updateMonsterHpBar();
 
@@ -692,22 +777,25 @@ function checkAnswer(selectedButton) {
             renderAvatar(currentMonster.id, defeatAvatarEl);
             
             const nextMonster = monsters[currentMonsterIndex + 1];
+            const defeatText = document.getElementById('defeatPopupText');
             
-            if (nextMonster) {
-                document.getElementById('defeatPopupText').innerHTML = 
-                    `Du beseiret <strong>${currentMonster.name}</strong>!<br>` +
-                    `<span style="color: #ffd700; font-size: 0.95rem; display: inline-block; margin-top: 8px;">Neste utfordrer: <strong>${nextMonster.name}</strong> ⚔️</span>`;
-            } else {
-                document.getElementById('defeatPopupText').innerHTML = 
-                    `Du beseiret <strong>${currentMonster.name}</strong>!<br>` +
-                    `<span style="color: #38b000; font-size: 0.95rem; display: inline-block; margin-top: 8px;">Siste fiende er nedkjempet! 🏆</span>`;
+            if (defeatText) {
+                if (nextMonster) {
+                    defeatText.innerHTML = 
+                        `Du beseiret <strong>${currentMonster.name}</strong>!<br>` +
+                        `<span style="color: #ffd700; font-size: 0.95rem; display: inline-block; margin-top: 8px;">Neste utfordrer: <strong>${nextMonster.name}</strong> ⚔️</span>`;
+                } else {
+                    defeatText.innerHTML = 
+                        `Du beseiret <strong>${currentMonster.name}</strong>!<br>` +
+                        `<span style="color: #38b000; font-size: 0.95rem; display: inline-block; margin-top: 8px;">Siste fiende er nedkjempet! 🏆</span>`;
+                }
             }
             
             const defeatPopup = document.getElementById('defeatPopup');
-            defeatPopup.classList.remove('hidden');
+            if (defeatPopup) defeatPopup.classList.remove('hidden');
 
             actionTimeout = setTimeout(() => {
-                defeatPopup.classList.add('hidden');
+                if (defeatPopup) defeatPopup.classList.add('hidden');
 
                 currentMonsterIndex++;
                 
@@ -747,9 +835,11 @@ function handleWrongAnswer() {
     triggerEnemyRayEffect();
 
     const playerSprite = document.getElementById('playerSprite');
-    playerSprite.classList.remove('shake');
-    void playerSprite.offsetWidth;
-    playerSprite.classList.add('shake');
+    if (playerSprite) {
+        playerSprite.classList.remove('shake');
+        void playerSprite.offsetWidth;
+        playerSprite.classList.add('shake');
+    }
 
     updateStats();
 
@@ -762,6 +852,7 @@ function handleWrongAnswer() {
 
 function spawnConfetti() {
     const container = document.getElementById('confettiContainer');
+    if (!container) return;
     container.innerHTML = '';
     const colors = ['#38b000', '#7b2cbf', '#ffd700', '#ff4d6d', '#00b4d8'];
 
@@ -777,10 +868,11 @@ function spawnConfetti() {
 }
 
 function clearConfetti() {
-    document.getElementById('confettiContainer').innerHTML = '';
+    const container = document.getElementById('confettiContainer');
+    if (container) container.innerHTML = '';
 }
 
-/* SEIER (KUN HER LEGGES RUNDE-POENG TIL TOTALEN) */
+/* SEIER */
 function winGame() {
     stopAllGameTimers();
     
@@ -788,40 +880,46 @@ function winGame() {
     diamonds++;
     saveData();
 
-    document.getElementById('gameScreen').classList.add('hidden');
+    document.getElementById('gameScreen')?.classList.add('hidden');
 
     renderAvatar(getPlayerAvatarId(), '#victoryAvatarContainer');
-    updateBuffIcons(); // <-- Kjøres her så ikonene teppes opp på seiersskjermen
+    updateBuffIcons();
 
-    const defeatedIcons = monsters.map(m => `<span class="defeated-icon">${getAvatarSvg(m.id)}</span>`).join('');
-    document.getElementById('victoryDefeatedList').innerHTML = defeatedIcons;
+    const defeatedIcons = monsters.map(m => `<span class="defeated-icon">${getAvatarSvgSafe(m.id)}</span>`).join('');
+    
+    const listEl = document.getElementById('victoryDefeatedList');
+    if (listEl) listEl.innerHTML = defeatedIcons;
+    
     document.getElementById('victoryRoundScore').innerText = `${score} pt`;
     document.getElementById('victoryTotalScore').innerText = `${totalScore} pt`;
     document.getElementById('victoryTotalDiamonds').innerText = `${diamonds} 💎`;
 
     spawnConfetti();
-    document.getElementById('victoryScreen').classList.remove('hidden');
+    document.getElementById('victoryScreen')?.classList.remove('hidden');
 }
 
-/* GAME OVER (RUNDE-POENG BLIR IKKE LAGT TIL TOTALEN) */
+/* GAME OVER */
 function endGame() {
     stopAllGameTimers();
     
-    document.getElementById('gameScreen').classList.add('hidden');
+    document.getElementById('gameScreen')?.classList.add('hidden');
     
-    const defeatedIcons = monsters.slice(0, currentMonsterIndex).map(m => `<span class="defeated-icon">${getAvatarSvg(m.id)}</span>`).join('') || "Ingen";
+    const defeatedIcons = monsters.slice(0, currentMonsterIndex).map(m => `<span class="defeated-icon">${getAvatarSvgSafe(m.id)}</span>`).join('') || "Ingen";
     const currentMonster = monsters[currentMonsterIndex];
 
-    document.getElementById('gameOverDefeatedList').innerHTML = defeatedIcons;
-    document.getElementById('gameOverStoppedBy').innerHTML = `<span class="stopped-by-icon">${getAvatarSvg(currentMonster.id)}</span> ${currentMonster.name}`;
+    const listEl = document.getElementById('gameOverDefeatedList');
+    if (listEl) listEl.innerHTML = defeatedIcons;
+    
+    const stoppedByEl = document.getElementById('gameOverStoppedBy');
+    if (stoppedByEl) stoppedByEl.innerHTML = `<span class="stopped-by-icon">${getAvatarSvgSafe(currentMonster.id)}</span> ${currentMonster.name}`;
+    
     document.getElementById('gameOverRoundScore').innerText = `${score} pt`;
     document.getElementById('gameOverHighscore').innerText = `${highscore} pt`;
 
-    // Tegn opp magikeren og oppdater buff-ikonene (🧪 ⏳) på Game Over-skjermen:
     renderAvatar(getPlayerAvatarId(), '#gameOverAvatarContainer');
     updateBuffIcons();
 
-    document.getElementById('gameOverScreen').classList.remove('hidden');
+    document.getElementById('gameOverScreen')?.classList.remove('hidden');
 }
 
 // Eksponer funksjoner til globalt scope
@@ -834,7 +932,7 @@ Object.assign(window, {
     openShop,
     closeShop,
     buyUpgrade,
-    sellUpgrade, // <-- Legg til denne!
+    sellUpgrade,
     openModalSettings,
     closeModalSettings,
     resetAllData,
@@ -848,4 +946,4 @@ Object.assign(window, {
 // Initiell kjøring
 updateStats();
 updateMenuDisplay();
-updateBuffIcons(); // <-- Legg til denne!
+updateBuffIcons();
