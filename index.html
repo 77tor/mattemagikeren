@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mattemagikeren</title>
+    <link rel="icon" type="image/svg" href="logo.svg">
+    <link rel="apple-touch-icon" href="logo.svg">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="game-container" id="mainContainer">
+    <!-- Diamond Bonus Pop -->
+    <div class="diamond-bonus-pop" id="diamondBonusPop">💎 +1 Diamant Bonus!</div>
+
+    <!-- Start-skjerm -->
+    <div id="startScreen" class="start-screen">
+        <button class="settings-gear-btn" onclick="openModalSettings()" title="Innstillinger">⚙️</button>
+
+        <h1 style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+            <div class="mage-avatar-container">
+                <span class="avatar-icon-small" id="titleAvatar"></span>
+                <div id="menuBuffs" class="active-buffs"></div> <!-- Visuell støtte på startskjerm -->
+            </div>
+            Mattemagikeren
+        </h1>
+        
+        <div class="highscore-badge" id="menuHighscoreDisplay">
+            🏆 REKORD: 0 pt | 💎 0
+        </div>
+
+        <button class="btn-main btn-shop" onclick="openShop()">🛒 Magiker-butikk</button>
+
+        <!-- Regneart -->
+        <div class="settings-section" style="margin-top: 5px;">
+            <div class="settings-label">Regneart:</div>
+            <button class="mode-btn active" onclick="setMode('add', event)">+</button>
+            <button class="mode-btn" onclick="setMode('sub', event)">-</button>
+            <button class="mode-btn" id="mulBtn" onclick="setMode('mul', event)">×</button>
+            <button class="mode-btn" onclick="setMode('div', event)">÷</button>
+            <button class="mode-btn" onclick="setMode('mix', event)">Miks</button>
+        </div>
+
+        <!-- Gangetabell valg -->
+        <div class="settings-section hidden" id="multiplicationTablesSection">
+            <div class="settings-label">Velg gangetabeller:</div>
+            <div class="tables-grid">
+                <button class="table-btn selected" onclick="toggleAllTables(event)">Alle</button>
+                <button class="table-btn selected" onclick="toggleTable(1, event)">1</button>
+                <button class="table-btn selected" onclick="toggleTable(2, event)">2</button>
+                <button class="table-btn selected" onclick="toggleTable(3, event)">3</button>
+                <button class="table-btn selected" onclick="toggleTable(4, event)">4</button>
+                <button class="table-btn selected" onclick="toggleTable(5, event)">5</button>
+                <button class="table-btn selected" onclick="toggleTable(6, event)">6</button>
+                <button class="table-btn selected" onclick="toggleTable(7, event)">7</button>
+                <button class="table-btn selected" onclick="toggleTable(8, event)">8</button>
+                <button class="table-btn selected" onclick="toggleTable(9, event)">9</button>
+                <button class="table-btn selected" onclick="toggleTable(10, event)">10</button>
+            </div>
+        </div>
+
+        <!-- Maks tall -->
+        <div class="settings-section" id="maxNumSection">
+            <div class="settings-label">Maks tall:</div>
+            <button class="mode-btn active" onclick="setMaxNum(10, event)">10</button>
+            <button class="mode-btn" onclick="setMaxNum(20, event)">20</button>
+            <button class="mode-btn" onclick="setMaxNum(100, event)">100</button>
+            <button class="mode-btn" onclick="setMaxNum(1000, event)">1000</button>
+        </div>
+
+        <!-- Tid per oppgave -->
+        <div class="settings-section">
+            <div class="settings-label">Tid per oppgave:</div>
+            <button class="mode-btn" onclick="setTimeLimit(5, event)">5 sek</button>
+            <button class="mode-btn" onclick="setTimeLimit(7, event)">7 sek</button>
+            <button class="mode-btn active" onclick="setTimeLimit(10, event)">10 sek</button>
+        </div>
+
+        <button class="btn-main" onclick="startGame()">Start Spillet</button>
+    </div>
+
+    <!-- MAGIKER-BUTIKK (SHOP) -->
+    <div id="shopScreen" class="shop-screen hidden">
+        <h1>🛒 Magiker-butikk</h1>
+        <p style="color: #00f0ff; font-weight: bold; margin-bottom: 5px;">
+            Dine diamanter: <span id="shopDiamondsDisplay">0</span> 💎
+        </p>
+        <div class="shop-items-container">
+            <!-- Tryllestav -->
+            <div class="shop-item">
+                <div class="shop-item-info">
+                    <h4>🪄 Magisk Tryllestav</h4>
+                    <p id="wandDesc">Gir +10% ekstra poeng.</p>
+                </div>
+                <div class="shop-item-actions">
+                    <button class="btn-buy" id="btnBuyWand" onclick="buyUpgrade('wand')">5 💎</button>
+                    <button class="btn-buy btn-sell" id="btnSellWand" onclick="sellUpgrade('wand')" style="display:none; background: #e63946; color: white;">Selg</button>
+                </div>
+            </div>
+
+            <!-- Skjold -->
+            <div class="shop-item">
+                <div class="shop-item-info">
+                    <h4>🛡️ Magisk Skjold</h4>
+                    <p id="shieldDesc">Tar 20% mindre skade ved feil.</p>
+                </div>
+                <div class="shop-item-actions">
+                    <button class="btn-buy" id="btnBuyShield" onclick="buyUpgrade('shield')">8 💎</button>
+                    <button class="btn-buy btn-sell" id="btnSellShield" onclick="sellUpgrade('shield')" style="display:none; background: #e63946; color: white;">Selg (+8 💎)</button>
+                </div>
+            </div>
+
+            <!-- Helse-eliksir -->
+            <div class="shop-item">
+                <div class="shop-item-info">
+                    <h4>🧪 Helse-eliksir</h4>
+                    <p id="hpDesc">Start spillet med +20 HP (120 HP).</p>
+                </div>
+                <div class="shop-item-actions">
+                    <button class="btn-buy" id="btnBuyHp" onclick="buyUpgrade('hp')">10 💎</button>
+                    <button class="btn-buy btn-sell" id="btnSellHp" onclick="sellUpgrade('hp')" style="display:none; background: #e63946; color: white;">Selg (+10 💎)</button>
+                </div>
+            </div>
+
+            <!-- Tids-amulett -->
+            <div class="shop-item">
+                <div class="shop-item-info">
+                    <h4>⏳ Tids-amulett</h4>
+                    <p id="timeDesc">Gir +2 sekunder på alle oppgaver.</p>
+                </div>
+                <div class="shop-item-actions">
+                    <button class="btn-buy" id="btnBuyTime" onclick="buyUpgrade('time')">12 💎</button>
+                    <button class="btn-buy btn-sell" id="btnSellTime" onclick="sellUpgrade('time')" style="display:none; background: #e63946; color: white;">Selg (+12 💎)</button>
+                </div>
+            </div>
+        </div>
+        <button class="btn-main btn-secondary" onclick="closeShop()">Tilbake</button>
+    </div>
+
+    <!-- Innstillinger-skjerm -->
+    <div id="settingsModalScreen" class="settings-modal-screen hidden">
+        <h1>⚙️ Innstillinger</h1>
+        <p style="margin: 15px 0; color: #c77dff; font-size: 0.95rem;">Administrer lagrede data</p>
+
+        <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; margin-bottom: 20px; width: 100%; max-width: 280px;">
+            <p style="font-size: 0.9rem; color: #e0aaff; margin-bottom: 5px;"><strong>Lagrede diamanter:</strong> <span id="modalDiamonds">0</span> 💎</p>
+            <p style="font-size: 0.9rem; color: #e0aaff;"><strong>Høyeste poengsum:</strong> <span id="modalHighscore">0</span> pt</p>
+        </div>
+
+        <div style="display: flex; flex-direction: column; width: 100%; max-width: 280px;">
+            <button class="btn-main btn-quit" onclick="resetAllData()">🗑️ Slett alt (poeng & kjøp)</button>
+            <button class="btn-main btn-secondary" onclick="closeModalSettings()">Tilbake</button>
+        </div>
+    </div>
+
+    <!-- Popup for nedkjempet monster -->
+    <div id="defeatPopup" class="defeat-popup-overlay hidden">
+        <div class="defeat-popup-card">
+            <h2 class="defeat-title">💥 NEDKJEMPET! 💥</h2>
+            <div class="defeat-avatar-wrapper">
+                <div id="defeatPopupAvatar" class="defeat-avatar-flat"></div>
+                <div class="defeat-cross">
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+            <p id="defeatPopupText" class="defeat-text">Du beseiret Slim!</p>
+        </div>
+    </div>
+
+    <!-- Pause Screen -->
+    <div id="pauseScreen" class="pause-screen hidden">
+        <h1>⏸️ Pauset</h1>
+        <p style="margin: 15px 0; color: #c77dff;">Spillet er satt på pause.</p>
+        
+        <div style="display: flex; flex-direction: column; width: 100%; max-width: 280px;">
+            <button class="btn-main" onclick="resumeGame()">Start (Fortsett)</button>
+            <button class="btn-main btn-quit" onclick="openSettings()">Avslutt</button>
+        </div>
+    </div>
+
+<!-- Victory Screen -->
+    <div id="victoryScreen" class="start-screen hidden">
+        <div id="confettiContainer"></div>
+        <h1>🏆 Seier!</h1>
+        
+        <div class="mage-avatar-container">
+            <div class="happy-mage-container" id="victoryAvatarContainer"></div>
+            <div id="summaryBuffs" class="active-buffs"></div>
+        </div>
+        <p style="color: #38b000; font-weight: bold; margin-bottom: 10px;">Magikeren er superfornøyd!</p>
+
+        <div class="summary-card">
+            <div class="summary-line">
+                <span>Fiender beseiret:</span>
+                <span class="defeated-list" id="victoryDefeatedList"></span>
+            </div>
+            <div class="summary-line">
+                <span>Poeng denne runden:</span>
+                <strong id="victoryRoundScore">0 pt</strong>
+            </div>
+            <div class="summary-line highlight">
+                <span>Totalt / Rekord:</span>
+                <strong id="victoryTotalScore">0 pt</strong>
+            </div>
+            <div class="summary-line">
+                <span>Rundebelønning:</span>
+                <strong>+1 💎</strong>
+            </div>
+            <div class="summary-line highlight">
+                <span>Totalt antall diamanter:</span>
+                <strong id="victoryTotalDiamonds">0 💎</strong>
+            </div>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; width: 100%; max-width: 280px;">
+            <button class="btn-main" onclick="startGame()">Spill en gang til</button>
+            <button class="btn-main btn-secondary" onclick="openSettings()">Bytt oppgavetype</button>
+        </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="gameOverScreen" class="start-screen hidden">
+        <h1 id="gameOverTitle">💥 Game Over</h1>
+        
+        <div class="mage-avatar-container">
+            <div id="gameOverAvatarContainer"></div>
+            <div id="gameOverBuffs" class="active-buffs"></div>
+        </div>
+
+        <div class="summary-card" style="margin-top: 15px;">
+            <div class="summary-line">
+                <span>Beseirede fiender:</span>
+                <span class="defeated-list" id="gameOverDefeatedList"></span>
+            </div>
+            <div class="summary-line">
+                <span>Stoppet av:</span>
+                <strong id="gameOverStoppedBy" style="color: #ff4d6d;">-</strong>
+            </div>
+            <div class="summary-line">
+                <span>Poeng denne runden:</span>
+                <strong id="gameOverRoundScore">0 pt</strong>
+            </div>
+            <div class="summary-line highlight">
+                <span>Høyeste rekord:</span>
+                <strong id="gameOverHighscore">0 pt</strong>
+            </div>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; width: 100%; max-width: 280px;">
+            <button class="btn-main" onclick="startGame()">Prøv Igjen</button>
+            <button class="btn-main btn-secondary" onclick="openSettings()">Bytt oppgavetype</button>
+        </div>
+    </div>
+
+    <!-- SPILL-ARENA (Innkapslet i gameScreen) -->
+    <div id="gameScreen" class="hidden">
+        <h1>Mattemagikeren</h1>
+
+        <div class="stats-bar">
+            <div class="stat-item">
+                <span class="stat-label">DIAMANTER</span>
+                <span class="stat-value" id="diamondDisplay">💎 0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">POENG</span>
+                <span class="stat-value" id="scoreDisplay">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">COMBO</span>
+                <span class="stat-value" id="streakDisplay">0</span>
+            </div>
+        </div>
+
+        <div class="monster-tracker" id="monsterTracker"></div>
+
+        <div class="arena" id="arenaContainer">
+            <!-- Spiller -->
+            <div class="character player" id="playerSprite">
+                <div class="points-pop minus-points-pop" id="minusPointsPop">-10 pt</div>
+                <div style="position: relative; display: inline-block;">
+                    <div class="avatar" id="playerAvatar"></div>
+                    <div id="gameBuffs" class="active-buffs"></div> <!-- Visuell støtte inne i spillet -->
+                </div>
+                <div style="font-size: 0.8rem; font-weight: bold;">Magiker</div>
+                <div class="hp-bar-bg">
+                    <div class="hp-bar-fill" id="playerHpBar"></div>
+                </div>
+            </div>
+
+            <div class="enemy-ray" id="enemyRay"></div>
+
+            <!-- Monster -->
+            <div class="character monster" id="monsterSprite">
+                <div class="points-pop plus-points-pop" id="plusPointsPop">+15 pt</div>
+                <div class="avatar" id="monsterAvatar"></div>
+                <div style="font-size: 0.8rem; font-weight: bold;" id="monsterName">Slime</div>
+                <div style="font-size: 0.7rem; color: #c77dff;" id="monsterStep">Fiende 1 av 5</div>
+                <div class="hp-bar-bg">
+                    <div class="hp-bar-fill" id="monsterHpBar"></div>
+                </div>
+                <div class="monster-progress-text" id="monsterProgressText">0 / 4 oppgaver</div>
+            </div>
+        </div>
+
+        <!-- Tidslinjen ligger nå isolert under arenaen -->
+        <div class="timer-container">
+            <div class="timer-fill" id="timerBar"></div>
+        </div>
+
+        <div class="question-box" id="questionDisplay">? + ?</div>
+
+        <div class="options-grid">
+            <button class="btn-option" onclick="checkAnswer(this)"></button>
+            <button class="btn-option" onclick="checkAnswer(this)"></button>
+            <button class="btn-option" onclick="checkAnswer(this)"></button>
+            <button class="btn-option" onclick="checkAnswer(this)"></button>
+        </div>
+
+        <div class="game-controls-bar">
+            <button class="btn-game-control" onclick="pauseGame()">⏸️ Pause</button>
+            <button class="btn-game-control danger" onclick="openSettings()">❌ Avslutt</button>
+        </div>
+    </div>
+</div>
+
+<script src="avatar.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>

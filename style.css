@@ -1,0 +1,221 @@
+/* === 1. GLOBAL LAYOUT OG RAMME === */
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+body { background: linear-gradient(135deg, #1e1035, #0f081d); color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+.game-container { background: rgba(35, 23, 62, 0.95); border: 3px solid #7b2cbf; border-radius: 16px; box-shadow: 0 0 25px rgba(123, 44, 191, 0.5); width: 460px; height: 640px; padding: 20px; text-align: center; position: relative; overflow: hidden; }
+h1 { color: #e0aaff; font-size: 1.8rem; margin-bottom: 10px; text-shadow: 0 0 8px #9d4edd; }
+.hidden { display: none !important; }
+
+/* === 2. SKJERMER OG VINDUER === */
+#startScreen, #gameScreen { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; align-items: center; }
+
+.game-over-screen, .start-screen, .pause-screen, .settings-modal-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 8, 29, 0.96); display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 20px; z-index: 10; border-radius: 13px; overflow-y: auto; text-align: center; }
+
+/* Egen styling for Butikk-skjermen for å unngå rullefelt */
+.shop-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 8, 29, 0.96);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px; /* Litt mindre polstring i topp/bunn */
+    z-index: 10;
+    border-radius: 13px;
+    overflow: hidden; /* Fjerner rullefeltet helt */
+    text-align: center;
+}
+
+.settings-section { margin-bottom: 8px; width: 100%; }
+.settings-label { font-size: 0.85rem; color: #c77dff; margin-bottom: 4px; }
+
+/* Ekstra mørk bakgrunn kun for pause */
+.pause-screen {
+    background: rgba(10, 5, 20, 0.995) !important;
+    backdrop-filter: blur(15px);
+}
+
+/* === 3. SPILLARENA OG FIGURER === */
+.arena { display: flex; justify-content: space-between; align-items: flex-end; height: 140px; margin-bottom: 5px; position: relative; width: 100%; }
+.character { width: 110px; display: flex; flex-direction: column; align-items: center; position: relative; }
+.avatar { font-size: 3.8rem; transition: transform 0.2s, opacity 0.4s ease; position: relative; width: 80px; height: 80px; display: flex; justify-content: center; align-items: center; }
+.hp-bar-bg { width: 100%; height: 8px; background: #444; border-radius: 5px; overflow: hidden; margin-top: 4px; }
+.hp-bar-fill { height: 100%; background: #ff4d6d; width: 100%; transition: width 0.3s; }
+.player .hp-bar-fill { background: #38b000; }
+.monster-progress-text { font-size: 0.75rem; color: #e0aaff; margin-top: 2px; }
+
+/* === 4. STATISTIKK OG MONSTER-TRACKER === */
+.stats-bar { display: flex; justify-content: space-between; width: 100%; margin-bottom: 10px; background: rgba(0, 0, 0, 0.3); padding: 8px 12px; border-radius: 8px; font-weight: bold; }
+.stat-item { display: flex; flex-direction: column; align-items: center; }
+.stat-label { font-size: 0.75rem; color: #c77dff; }
+.stat-value { font-size: 1.1rem; }
+.highscore-badge { background: rgba(255, 215, 0, 0.15); border: 1px solid #ffd700; color: #ffd700; padding: 5px 12px; border-radius: 12px; font-size: 0.85rem; font-weight: bold; margin-bottom: 8px; }
+.monster-tracker { display: flex; justify-content: space-around; align-items: center; width: 100%; background: rgba(0, 0, 0, 0.4); border: 1px solid #5a189a; border-radius: 20px; padding: 6px 10px; margin-bottom: 10px; }
+.tracker-node { font-size: 1.3rem; opacity: 0.3; filter: grayscale(100%); transition: all 0.3s ease; }
+.tracker-node.active { opacity: 1; filter: grayscale(0%); transform: scale(1.2); text-shadow: 0 0 10px #e0aaff; }
+.tracker-node.defeated { opacity: 0.6; filter: grayscale(50%); position: relative; }
+.tracker-node.defeated::after { content: "✓"; position: absolute; bottom: -5px; right: -5px; font-size: 0.8rem; color: #38b000; font-weight: bold; }
+
+/* === 5. OPPGAVE OG TIDSLINJE === */
+.timer-container { width: 100%; height: 8px; background: #333; border-radius: 5px; overflow: hidden; margin-top: 5px; margin-bottom: 10px; position: relative; z-index: 2; }
+.timer-fill { height: 100%; background: #38b000; width: 100%; transition: width 0.1s linear; }
+.question-box { font-size: 2.2rem; font-weight: bold; color: #ffffff; margin: 5px 0 10px 0; background: rgba(0, 0, 0, 0.2); padding: 8px; border-radius: 10px; border: 1px solid #5a189a; width: 100%; }
+.options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 5px; width: 100%; }
+.tables-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; max-width: 320px; margin: 0 auto; }
+
+/* === 6. KNAPPER OG INTERAKSJON === */
+.btn-option { background: #5a189a; color: white; border: 2px solid #7b2cbf; padding: 12px; font-size: 1.3rem; font-weight: bold; border-radius: 10px; cursor: pointer; transition: all 0.15s ease; }
+.btn-option:hover { background: #7b2cbf; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(123, 44, 191, 0.4); }
+.btn-main { background: #38b000; color: white; border: none; padding: 12px 24px; font-size: 1.1rem; font-weight: bold; border-radius: 25px; cursor: pointer; margin: 5px auto !important; display: block; box-shadow: 0 4px 15px rgba(56, 176, 0, 0.4); transition: background 0.2s; width: 100%; max-width: 280px; align-self: center; }
+.btn-main:hover { background: #70e000; }
+.btn-shop { background: #00b4d8; box-shadow: 0 4px 15px rgba(0, 180, 216, 0.4); }
+.btn-shop:hover { background: #90e0ef; color: #000; }
+.btn-secondary { background: #7b2cbf; box-shadow: 0 4px 15px rgba(123, 44, 191, 0.4); margin: 5px auto !important; display: block; width: 100%; max-width: 280px; align-self: center; }
+.btn-secondary:hover { background: #9d4edd; }
+.btn-quit { background: #d90429; box-shadow: 0 4px 15px rgba(217, 4, 41, 0.4); }
+.btn-quit:hover { background: #ef233c; }
+.btn-game-control { background: rgba(60, 9, 108, 0.6); color: #e0aaff; border: 1px solid #7b2cbf; padding: 6px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; cursor: pointer; transition: all 0.2s; }
+.btn-game-control:hover { background: #7b2cbf; color: #fff; }
+.btn-game-control.danger { border-color: #ff4d6d; color: #ff4d6d; }
+.btn-game-control.danger:hover { background: #ff4d6d; color: #fff; }
+.settings-gear-btn { position: absolute; top: 15px; right: 15px; background: transparent; border: none; font-size: 1.5rem; cursor: pointer; transition: transform 0.3s ease; z-index: 12; }
+.settings-gear-btn:hover { transform: rotate(90deg); }
+.mode-btn { background: #3c096c; color: #e0aaff; border: 1px solid #7b2cbf; padding: 5px 8px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; margin: 2px; }
+.mode-btn.active { background: #7b2cbf; color: #fff; font-weight: bold; }
+.table-btn { background: #240046; color: #c77dff; border: 1px solid #5a189a; padding: 4px 7px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; transition: all 0.2s; }
+.table-btn.selected { background: #9d4edd; color: #fff; border-color: #e0aaff; font-weight: bold; }
+.game-controls-bar { display: flex; justify-content: center; gap: 12px; margin-top: 10px; width: 100%; }
+
+/* === 7. BUTIKK OG RESULTAT-OPPSUMMERING === */
+.shop-items-container { 
+    width: 100%; 
+    max-width: 360px; 
+    /* Fjernet max-height og overflow for å fjerne rullefeltet */
+    margin: 5px 0; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 6px; 
+}
+
+.shop-item { 
+    background: rgba(35, 23, 62, 0.8); 
+    border: 1px solid #7b2cbf; 
+    border-radius: 10px; 
+    padding: 6px 10px; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    text-align: left; 
+}
+
+.shop-item-info h4 { color: #e0aaff; font-size: 0.85rem; margin-bottom: 1px; }
+.shop-item-info p { color: #aaa; font-size: 0.7rem; margin: 0; }
+
+.shop-item-actions {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.btn-buy { background: #ffb703; color: #000; border: none; padding: 5px 10px; border-radius: 8px; font-weight: bold; font-size: 0.8rem; cursor: pointer; white-space: nowrap; }
+.btn-buy:hover { background: #ffb703; filter: brightness(1.2); }
+.btn-buy:disabled { background: #444; color: #888; cursor: not-allowed; }
+
+.happy-mage-container { position: relative; font-size: 3.5rem; margin: 2px auto; animation: victoryJump 0.6s infinite alternate ease-in-out; width: 130px; height: 130px; display: flex; justify-content: center; align-items: center; }
+.summary-card { background: rgba(35, 23, 62, 0.85); border: 1.5px solid #7b2cbf; border-radius: 14px; padding: 12px 18px; width: 100%; max-width: 380px; margin: 0 auto 10px auto; text-align: left; }
+.summary-line { display: flex; justify-content: space-between; align-items: center; font-size: 1rem; margin: 6px 0; color: #e0aaff; }
+.summary-line strong { color: #fff; }
+.summary-line.highlight { color: #ffd700; font-weight: bold; border-top: 1px dashed rgba(123, 44, 191, 0.5); padding-top: 4px; }
+.defeated-list { font-size: 1.2rem; text-align: center; letter-spacing: 4px; margin-top: 2px; }
+
+/* === 8. IKONER OG VISUELLE EFFEKTER === */
+.avatar svg, .avatar-icon-small svg, .happy-mage-container svg { width: 100%; height: 100%; display: block; }
+.tracker-node svg, .defeated-icon svg, .stopped-by-icon svg { width: 24px; height: 24px; display: inline-block; vertical-align: middle; }
+.effect-particle { position: absolute; font-size: 1.5rem; pointer-events: none; z-index: 5; animation: flyEffect 0.6s ease-out forwards; }
+.enemy-ray { position: absolute; top: 50%; right: 20%; width: 0; height: 8px; background: linear-gradient(90deg, transparent, #ff4d6d, #ffe600); box-shadow: 0 0 15px #ff4d6d; border-radius: 4px; pointer-events: none; opacity: 0; z-index: 4; }
+.enemy-ray.active { animation: shootRay 0.4s ease-in-out forwards; }
+.points-pop { position: absolute; top: -20px; font-size: 1.2rem; font-weight: bold; opacity: 0; pointer-events: none; text-shadow: 0 0 5px #000; z-index: 6; white-space: nowrap; }
+.minus-points-pop { color: #ff4d6d; }
+.plus-points-pop { color: #70e000; text-shadow: 0 0 6px rgba(112, 224, 0, 0.6), 0 0 2px #000; }
+.points-pop.animate { animation: floatUp 0.8s ease-out forwards; }
+.diamond-bonus-pop { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 1.4rem; font-weight: bold; color: #00f0ff; background: rgba(0, 0, 0, 0.85); border: 2px solid #00f0ff; box-shadow: 0 0 15px #00f0ff; padding: 8px 16px; border-radius: 20px; opacity: 0; pointer-events: none; z-index: 20; white-space: nowrap; }
+.diamond-bonus-pop.animate { animation: bonusPop 1.4s ease-out forwards; }
+.confetti-piece { position: absolute; width: 10px; height: 10px; top: -20px; z-index: 15; animation: confettiFall 2.5s infinite linear; }
+.shake { animation: shake 0.4s ease-in-out; }
+
+/* === 9. POPUP FOR NEDKJEMPET MONSTER === */
+.defeat-popup-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); display: flex; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(3px); }
+.defeat-popup-card { background: #2a085c; border: 3px solid #70e000; border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 0 25px rgba(112, 224, 0, 0.6); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.defeat-title { color: #70e000; font-size: 1.6rem; margin-bottom: 10px; text-shadow: 0 0 10px rgba(112, 224, 0, 0.8); }
+.defeat-avatar-wrapper { position: relative; width: 120px; height: 120px; margin: 10px auto; }
+.defeat-avatar-flat { width: 100%; height: 100%; }
+.defeat-text { color: #ffffff; font-size: 1.1rem; font-weight: bold; margin-top: 10px; }
+.defeat-cross { position: absolute; top: 50%; left: 50%; width: 80px; height: 80px; transform: translate(-50%, -50%) scale(0); pointer-events: none; animation: crossGrow 1.2s 0.2s forwards cubic-bezier(0.25, 1, 0.5, 1); }
+.defeat-cross span { position: absolute; top: 50%; left: 0; width: 100%; height: 8px; background-color: #ff3333; border-radius: 4px; box-shadow: 0 0 10px rgba(255, 51, 51, 0.9); }
+.defeat-cross span:nth-child(1) { transform: rotate(45deg); }
+.defeat-cross span:nth-child(2) { transform: rotate(-45deg); }
+
+/* === 10. ANIMASJONER === */
+@keyframes flyEffect { 0% { opacity: 1; transform: translate(0, 0) scale(0.6) rotate(0deg); } 100% { opacity: 0; transform: translate(var(--target-x), var(--target-y)) scale(1.4) rotate(360deg); } }
+@keyframes shootRay { 0% { width: 0%; opacity: 1; right: 25%; } 50% { width: 60%; opacity: 1; right: 25%; } 100% { width: 0%; opacity: 0; right: 75%; } }
+@keyframes floatUp { 0% { transform: translateY(0) scale(0.8); opacity: 1; } 50% { transform: translateY(-20px) scale(1.2); opacity: 1; } 100% { transform: translateY(-35px) scale(1); opacity: 0; } }
+@keyframes bonusPop { 0% { opacity: 0; transform: translate(-50%, -30%) scale(0.6); } 20% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); } 80% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -70%) scale(0.9); } }
+@keyframes victoryJump { from { transform: translateY(0) scale(1); } to { transform: translateY(-18px) scale(1.1); } }
+@keyframes confettiFall { 0% { transform: translateY(0) rotate(0deg); opacity: 1; } 100% { transform: translateY(450px) rotate(720deg); opacity: 0; } }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-12px) rotate(-5deg); } 40% { transform: translateX(12px) rotate(5deg); } 60% { transform: translateX(-8px) rotate(-3deg); } 80% { transform: translateX(8px) rotate(3deg); } }
+@keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes crossGrow { 0% { transform: translate(-50%, -50%) scale(0.1); opacity: 0; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.95; } }
+
+/* Skjul scrollbars og forhindre at konfetti utvider skjermen */
+body {
+    overflow: hidden;
+}
+
+/* Sørg for at modalkortet tilpasser seg innholdet uten rullefelt */
+.modal-screen, .card-container {
+    max-height: 90vh;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+/* Forhindre at konfetti skaper scrollbars */
+#confettiContainer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+/* Sørg for at beholderen til magikeren er referansepunktet */
+.mage-avatar-container {
+    position: relative;
+    display: inline-block;
+}
+
+/* Plasser ikonene rett ved hatten/skulderen til magikeren */
+.active-buffs {
+    position: absolute;
+    top: 15px;            /* Høydejustering ved hatten */
+    left: -5px;         /* Trekker ikonet helt inntil venstre side av magikeren */
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.buff-icon {
+    font-size: 1.1rem;
+    filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.8));
+}
+
+@keyframes buffFloat {
+    0% { transform: translateY(0px) scale(1); }
+    100% { transform: translateY(-4px) scale(1.08); }
+}
