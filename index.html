@@ -14,23 +14,48 @@
     <!-- Diamond Bonus Pop -->
     <div class="diamond-bonus-pop" id="diamondBonusPop">💎 +1 Diamant Bonus!</div>
 
-    <!-- Start-skjerm -->
-    <div id="startScreen" class="start-screen">
+<!-- KARTSKJERM (Startside/Hovedkart) -->
+<div id="mapScreen" class="map-screen hidden">
+    <h1>👑 Redd kongen</h1>
+    <p class="map-subtitle">Du er en god magiker som skal redde kongen. Samle poeng ved å løse oppgaver for å befri områdene og til slutt redde kongen!</p>
+    <div class="highscore-badge" id="mapHighscoreDisplay">
+    🏆 REKORD: 0 pt | ⭐ TOTAL: 0 pt | 💎 0
+</div>
+
+    <!-- Interaktiv kartbeholder -->
+<div class="interactive-map-wrapper">
+    <img src="kart.png" class="map-image" alt="Verdenskart">
+    <div id="mapNodesContainer"></div>
+    
+    <!-- Legg til denne linjen nederst i wrapperen -->
+    <div id="mapInfoBanner" class="map-info-banner hidden"></div>
+</div>
+
+    <button class="btn-main" onclick="openSettings()">Gå til Meny ⚙️</button>
+</div>
+
+
+<!-- Start-skjerm / Menyside -->
+    <div id="startScreen" class="start-screen hidden">
         <button class="settings-gear-btn" onclick="openModalSettings()" title="Innstillinger">⚙️</button>
 
         <h1 style="display: flex; align-items: center; justify-content: center; gap: 10px;">
             <div class="mage-avatar-container">
                 <span class="avatar-icon-small" id="titleAvatar"></span>
-                <div id="menuBuffs" class="active-buffs"></div> <!-- Visuell støtte på startskjerm -->
+                <div id="menuBuffs" class="active-buffs"></div>
             </div>
             Mattemagikeren
         </h1>
         
         <div class="highscore-badge" id="menuHighscoreDisplay">
-            🏆 REKORD: 0 pt | 💎 0
+            🏆 REKORD: 0 pt | ⭐ TOTAL: 0 pt | 💎 0
         </div>
 
-        <button class="btn-main btn-shop" onclick="openShop()">🛒 Magiker-butikk</button>
+        <!-- Knapperad for Butikk og Verdenskart -->
+        <div style="display: flex; gap: 8px; width: 100%; max-width: 320px; margin: 4px 0;">
+            <button class="btn-main btn-shop" onclick="openShop()" style="margin: 0 !important; flex: 1; font-size: 0.9rem; padding: 8px 10px;">🛒 Butikk</button>
+            <button class="btn-main btn-secondary" onclick="showMapScreen()" style="margin: 0 !important; flex: 1; font-size: 0.9rem; padding: 8px 10px;">🗺️ Kart</button>
+        </div>
 
         <!-- Regneart -->
         <div class="settings-section" style="margin-top: 5px;">
@@ -69,7 +94,7 @@
             <button class="mode-btn" onclick="setMaxNum(1000, event)">1000</button>
         </div>
 
-<!-- Tid per oppgave -->
+        <!-- Tid per oppgave -->
         <div class="settings-section" style="margin-top: 10px;">
             <div class="settings-label">Tid per oppgave:</div>
             <div class="time-options">
@@ -80,7 +105,9 @@
             </div>
         </div>
 
-        <button class="btn-main" onclick="startGame()">Start Spillet</button>
+        <div style="display: flex; flex-direction: column; gap: 5px; width: 100%; max-width: 280px; margin-top: 10px;">
+            <button class="btn-main" onclick="startGame()">Start Spillet</button>
+        </div>
     </div>
 
     <!-- MAGIKER-BUTIKK (SHOP) -->
@@ -141,6 +168,25 @@
         <button class="btn-main btn-secondary" onclick="closeShop()">Tilbake</button>
     </div>
 
+<!-- Skjerm for befridd/opplåst sted -->
+<div id="locationUnlockedScreen" class="hidden">
+    <div class="unlocked-header">
+        <img src="Bilder/magiker.png" alt="Magiker" class="unlocked-mage-img">
+        <h2>OMRÅDE BEFRIDD!</h2>
+    </div>
+
+    <div class="unlocked-banner-wrapper">
+        <img id="unlockedLocationImg" src="" alt="Befridd sted" class="unlocked-location-img">
+    </div>
+
+    <div class="unlocked-body">
+        <h3 id="unlockedLocationTitle">Fiskerlandsbyen</h3>
+        <p id="unlockedLocationText">Du har nådd 1217 poeng og befridd kysten!</p>
+    </div>
+
+    <button class="btn-main" onclick="closeUnlockedScreen()">Fortsett ▶</button>
+</div>
+
     <!-- Innstillinger-skjerm -->
     <div id="settingsModalScreen" class="settings-modal-screen hidden">
         <h1>⚙️ Innstillinger</h1>
@@ -172,18 +218,18 @@
         </div>
     </div>
 
-    <!-- Pause Screen -->
+<!-- Pause Screen -->
     <div id="pauseScreen" class="pause-screen hidden">
         <h1>⏸️ Pauset</h1>
         <p style="margin: 15px 0; color: #c77dff;">Spillet er satt på pause.</p>
         
         <div style="display: flex; flex-direction: column; width: 100%; max-width: 280px;">
-            <button class="btn-main" onclick="resumeGame()">Start (Fortsett)</button>
-            <button class="btn-main btn-quit" onclick="openSettings()">Avslutt</button>
+            <button class="btn-main" onclick="resumeGame()">▶ Fortsett</button>
+            <button class="btn-main btn-secondary" onclick="openSettings()">❌ Avslutt</button>
         </div>
     </div>
 
-<!-- Victory Screen -->
+    <!-- Victory Screen -->
     <div id="victoryScreen" class="start-screen hidden">
         <div id="confettiContainer"></div>
         <h1>🏆 Seier!</h1>
@@ -217,9 +263,9 @@
             </div>
         </div>
         
-        <div style="display: flex; flex-direction: column; width: 100%; max-width: 280px;">
-            <button class="btn-main" onclick="startGame()">Spill en gang til</button>
-            <button class="btn-main btn-secondary" onclick="openSettings()">Bytt oppgavetype</button>
+        <div style="display: flex; flex-direction: column; gap: 5px; width: 100%; max-width: 280px;">
+            <button class="btn-main" onclick="showMapScreen()">🗺️ Se Kart og Fremgang</button>
+            <button class="btn-main btn-secondary" onclick="startGame()">Spill en gang til</button>
         </div>
     </div>
 
@@ -251,9 +297,9 @@
             </div>
         </div>
         
-        <div style="display: flex; flex-direction: column; width: 100%; max-width: 280px;">
-            <button class="btn-main" onclick="startGame()">Prøv Igjen</button>
-            <button class="btn-main btn-secondary" onclick="openSettings()">Bytt oppgavetype</button>
+        <div style="display: flex; flex-direction: column; gap: 5px; width: 100%; max-width: 280px;">
+            <button class="btn-main" onclick="showMapScreen()">🗺️ Tilbake til Kartet</button>
+            <button class="btn-main btn-secondary" onclick="startGame()">Prøv Igjen</button>
         </div>
     </div>
 
@@ -284,7 +330,7 @@
                 <div class="points-pop minus-points-pop" id="minusPointsPop">-10 pt</div>
                 <div style="position: relative; display: inline-block;">
                     <div class="avatar" id="playerAvatar"></div>
-                    <div id="gameBuffs" class="active-buffs"></div> <!-- Visuell støtte inne i spillet -->
+                    <div id="gameBuffs" class="active-buffs"></div>
                 </div>
                 <div style="font-size: 0.8rem; font-weight: bold;">Magiker</div>
                 <div class="hp-bar-bg">
@@ -307,7 +353,7 @@
             </div>
         </div>
 
-        <!-- Tidslinjen ligger nå isolert under arenaen -->
+        <!-- Tidslinje -->
         <div class="timer-container">
             <div class="timer-fill" id="timerBar"></div>
         </div>

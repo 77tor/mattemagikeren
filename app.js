@@ -11,6 +11,170 @@ let upgrades = JSON.parse(localStorage.getItem('mats_magician_upgrades')) || {
     timeBought: false
 };
 
+// Konfigurasjon for kartet
+const worldLocations = [
+    { id: 1, name: "Fiskerlandsbyen", req: 1000, desc: "Du har reddet kysten!", x: 23, y: 28, zoomX: 5, zoomY: 5, img: "Bilder/01.fisk.png" },
+    { id: 2, name: "Den Mørke Skogen", req: 8000, desc: "Skogen er befridd!", x: 34, y: 61, zoomX: 20, zoomY: 50, img: "Bilder/02.skog.png" },
+    { id: 3, name: "Tåkefjellet", req: 14000, desc: "Fjellet er trygt!", x: 50, y: 19, zoomX: 65, zoomY: 1, img: "Bilder/03.fjell.png" },
+    { id: 4, name: "Dragegrotten", req: 21000, desc: "Grotten er renset!", x: 77, y: 42, zoomX: 100, zoomY: 25, img: "Bilder/04.grotte.png" },
+    { id: 5, name: "Kongens Slott", req: 29000, desc: "Slottet er reddet!", x: 78, y: 73, zoomX: 100, zoomY: 80, img: "Bilder/05.slott.png" }
+];
+
+
+// Åpne kartet
+function showMapScreen() {
+    stopAllGameTimers();
+
+    // Oppdater rekord, total og diamanter på kartet
+    updateMenuDisplay();
+
+    // Nullstill kart-zoom når kartet åpnes
+    const wrapper = document.querySelector('.interactive-map-wrapper');
+    const infoBanner = document.getElementById('mapInfoBanner');
+    if (wrapper) wrapper.classList.remove('zoomed', 'locked-zoom');
+    if (infoBanner) infoBanner.classList.add('hidden');
+
+    document.getElementById('startScreen')?.classList.add('hidden');
+    document.getElementById('gameScreen')?.classList.add('hidden');
+    document.getElementById('victoryScreen')?.classList.add('hidden');
+    document.getElementById('gameOverScreen')?.classList.add('hidden');
+
+    const mapScreen = document.getElementById('mapScreen');
+    if (mapScreen) mapScreen.classList.remove('hidden');
+
+    renderMap();
+}
+
+
+
+function renderMap() {
+    const container = document.getElementById('mapNodesContainer');
+    if (!container) return;
+    
+    container.innerHTML = ''; 
+
+    worldLocations.forEach(loc => {
+        const isUnlocked = totalScore >= loc.req;
+        const clickableArea = document.createElement('div');
+        
+        clickableArea.className = `map-click-target ${isUnlocked ? 'unlocked' : 'locked'}`;
+        clickableArea.style.left = `${loc.x}%`;
+        clickableArea.style.top = `${loc.y}%`;
+        
+        if (!isUnlocked) {
+            clickableArea.innerHTML = `<span class="lock-icon">🔒</span>`;
+        }
+        
+        clickableArea.onclick = (e) => {
+            e.stopPropagation();
+            zoomToLocation(loc, isUnlocked);
+        };
+
+        container.appendChild(clickableArea);
+    });
+}
+
+
+// Viser seiersskjermen for et opplåst/befridd sted
+function showUnlockedLocationScreen(location, currentPoints) {
+    const screen = document.getElementById('locationUnlockedScreen');
+    const imgEl = document.getElementById('unlockedLocationImg');
+    const titleEl = document.getElementById('unlockedLocationTitle');
+    const textEl = document.getElementById('unlockedLocationText');
+
+    if (!screen) return;
+
+    if (imgEl) imgEl.src = location.img;
+    if (titleEl) titleEl.textContent = location.name;
+    if (textEl) {
+        textEl.innerHTML = `Gratulerer! Du har nådd <strong>${currentPoints} poeng</strong>.<br>${location.desc}`;
+    }
+
+    screen.classList.remove('hidden');
+}
+
+// Lukker pop-upen og returnerer til kartet
+function closeUnlockedScreen() {
+    document.getElementById('locationUnlockedScreen')?.classList.add('hidden');
+    showMapScreen();
+}
+
+// ZOOM-FUNKSJON MED KLIKKBAR TEKST FOR ÅPNE STEDER
+function zoomToLocation(location, isUnlocked) {
+    const wrapper = document.querySelector('.interactive-map-wrapper');
+    const mapImg = document.querySelector('.map-image');
+    const infoBanner = document.getElementById('mapInfoBanner');
+
+    if (!wrapper || !mapImg) return;
+
+    // Sett zoom-punktet direkte fra zoomX og zoomY
+    mapImg.style.transformOrigin = `${location.zoomX}% ${location.zoomY}%`;
+    void mapImg.offsetHeight; // Tvinger oppdatering
+
+    wrapper.classList.add('zoomed');
+
+    if (!isUnlocked) {
+        wrapper.classList.add('locked-zoom');
+        if (infoBanner) {
+            infoBanner.innerHTML = `🔒 <strong>${location.name}</strong> er låst! Du må samle <span class="req-highlight">${location.req} poeng</span>.`;
+            infoBanner.classList.remove('hidden');
+        }
+    } else {
+        wrapper.classList.remove('locked-zoom');
+        if (infoBanner) {
+            // Kall handleOpenSettings i stedet for openSettings direkte
+            infoBanner.innerHTML = `⚔️ <strong>${location.name}</strong> er åpen! <span class="start-link" onclick="handleOpenSettings(event)">Klikk her for å starte! ▶</span>`;
+            infoBanner.classList.remove('hidden');
+        }
+    }
+}
+
+// Ny hjelpefunksjon som zoomer ut FØR menyen åpnes
+function handleOpenSettings(event) {
+    if (event) event.stopPropagation();
+
+    const wrapper = document.querySelector('.interactive-map-wrapper');
+    const infoBanner = document.getElementById('mapInfoBanner');
+
+    // 1. Zoom ut kartet og skjul tekstbanneret
+    if (wrapper) wrapper.classList.remove('zoomed', 'locked-zoom');
+    if (infoBanner) infoBanner.classList.add('hidden');
+
+    // 2. Vent til utzoomingen er ferdig (800ms) før openSettings() kjøres
+    setTimeout(() => {
+        openSettings();
+    }, 800);
+}
+
+// Funksjon som kalles når brukeren klikker på teksten for et åpent sted
+function handleWorldClick(locationId, event) {
+    if (event) event.stopPropagation(); // Hindrer at kartet zoomer ut ved klikk på teksten
+    
+    const wrapper = document.querySelector('.interactive-map-wrapper');
+    const infoBanner = document.getElementById('mapInfoBanner');
+
+    // Tilbakestiller kartvisningen
+    if (wrapper) wrapper.classList.remove('zoomed', 'locked-zoom');
+    if (infoBanner) infoBanner.classList.add('hidden');
+
+    // Starter spillet/banen (eller åpner menyen)
+    startWorldLevel(locationId);
+}
+
+// Global lytter: Zoom ut dersom man klikker på selve kartbildet (men IKKE på tekstbanneret)
+document.addEventListener('click', (e) => {
+    const wrapper = document.querySelector('.interactive-map-wrapper');
+    const infoBanner = document.getElementById('mapInfoBanner');
+
+    if (wrapper && wrapper.classList.contains('zoomed')) {
+        // Hvis klikket var inne i wrapperen, men IKKE på infoBanner
+        if (wrapper.contains(e.target) && !e.target.closest('#mapInfoBanner')) {
+            wrapper.classList.remove('zoomed', 'locked-zoom');
+            if (infoBanner) infoBanner.classList.add('hidden');
+        }
+    }
+});
+
 // Spillvariabler
 let maxPlayerHp = 100;
 let playerHp = 100;
@@ -89,7 +253,7 @@ function toggleAllTables(e) {
     if (selectedTables.length === 10) {
         selectedTables = [2];
         buttons.forEach(b => b.classList.remove('selected'));
-        if (buttons[1]) buttons[1].classList.add('selected'); // Indeks 1 svarer til tall 2
+        if (buttons[1]) buttons[1].classList.add('selected');
     } else {
         selectedTables = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
         buttons.forEach(b => b.classList.add('selected'));
@@ -126,7 +290,6 @@ function setMaxNum(max, e) {
             noTimeBtn.classList.add('hidden');
             noTimeBtn.style.display = 'none';
 
-            // Hvis "Ingen tid" var valgt, tilbakestill til 4 sekunder (som er første knapp)
             if (baseTimeLimit === 0 || timeLimit === 0) {
                 baseTimeLimit = 4;
                 timeLimit = 4;
@@ -154,10 +317,19 @@ function setActiveButton(element) {
 }
 
 function updateMenuDisplay() {
+    const displayText = `🏆 REKORD: ${highscore} pt | ⭐ TOTAL: ${totalScore} pt | 💎 ${diamonds}`;
+
     const menuDisplay = document.getElementById('menuHighscoreDisplay');
     if (menuDisplay) {
-        menuDisplay.innerText = `🏆 REKORD: ${highscore} pt | 💎 ${diamonds}`;
+        menuDisplay.innerText = displayText;
     }
+
+    // LEGG TIL DISSE TO LINJENE:
+    const mapDisplay = document.getElementById('mapHighscoreDisplay');
+    if (mapDisplay) {
+        mapDisplay.innerText = displayText;
+    }
+
     renderAvatar(getPlayerAvatarId(), '#titleAvatar');
 }
 
@@ -382,6 +554,20 @@ function stopAllGameTimers() {
 function openSettings() {
     stopAllGameTimers();
 
+    // 1. Nullstill poeng og framgang fra den avbrutte runden
+    score = 0;
+    streak = 0;
+    monsterSolvedTasks = 0;
+
+    // 2. Nullstill kart-zoomen og skjul tekstbanneret
+    const wrapper = document.querySelector('.interactive-map-wrapper');
+    const infoBanner = document.getElementById('mapInfoBanner');
+    
+    if (wrapper) wrapper.classList.remove('zoomed', 'locked-zoom');
+    if (infoBanner) infoBanner.classList.add('hidden');
+
+    // 3. Skjul alle andre skjermer (inkludert kartet og pausevisningen)
+    document.getElementById('mapScreen')?.classList.add('hidden');
     document.getElementById('pauseScreen')?.classList.add('hidden');
     document.getElementById('victoryScreen')?.classList.add('hidden');
     document.getElementById('gameOverScreen')?.classList.add('hidden');
@@ -389,9 +575,12 @@ function openSettings() {
     document.getElementById('settingsModalScreen')?.classList.add('hidden');
     document.getElementById('gameScreen')?.classList.add('hidden');
 
+    // 4. Vis startmenyen og oppdater visningen
     document.getElementById('startScreen')?.classList.remove('hidden');
     updateMenuDisplay();
 }
+
+
 
 function pauseGame() {
     clearInterval(timerInterval);
@@ -404,8 +593,12 @@ function resumeGame() {
     runTimer(); 
 }
 
-function startGame() {
+// Ta imot worldId som argument (f.eks. 1 for Fiskerlandsbyen)
+function startGame(worldId = 1) {
     stopAllGameTimers();
+
+    // 1. Lagre den valgte verdenen så spilleskjermen vet hva som skal lastes
+    currentWorldId = worldId;
 
     maxPlayerHp = upgrades.hpBought ? 120 : 100;
     playerHp = maxPlayerHp;
@@ -420,9 +613,12 @@ function startGame() {
     renderAvatar(getPlayerAvatarId(), '#playerAvatar');
     updateBuffIcons();
 
+    // 2. Skjul kartskjermen i tillegg til de andre skjermene
     document.getElementById('startScreen')?.classList.add('hidden');
+    document.getElementById('mapScreen')?.classList.add('hidden'); // Sørg for at kartet skjules
     document.getElementById('gameOverScreen')?.classList.add('hidden');
     document.getElementById('victoryScreen')?.classList.add('hidden');
+    
     document.getElementById('gameScreen')?.classList.remove('hidden');
 
     renderTracker();
@@ -876,11 +1072,16 @@ function clearConfetti() {
 function winGame() {
     stopAllGameTimers();
     
+    const prevTotal = totalScore;
     totalScore += score;
     diamonds++;
     saveData();
 
     document.getElementById('gameScreen')?.classList.add('hidden');
+
+    if (checkNewAreaUnlocked(prevTotal)) {
+        return; 
+    }
 
     renderAvatar(getPlayerAvatarId(), '#victoryAvatarContainer');
     updateBuffIcons();
@@ -902,24 +1103,44 @@ function winGame() {
 function endGame() {
     stopAllGameTimers();
     
+    const prevTotal = totalScore;
+    totalScore += score;
+    saveData();
+    
     document.getElementById('gameScreen')?.classList.add('hidden');
+
+    if (checkNewAreaUnlocked(prevTotal)) {
+        return; 
+    }
     
     const defeatedIcons = monsters.slice(0, currentMonsterIndex).map(m => `<span class="defeated-icon">${getAvatarSvgSafe(m.id)}</span>`).join('') || "Ingen";
     const currentMonster = monsters[currentMonsterIndex];
 
     const listEl = document.getElementById('gameOverDefeatedList');
     if (listEl) listEl.innerHTML = defeatedIcons;
-    
+
     const stoppedByEl = document.getElementById('gameOverStoppedBy');
     if (stoppedByEl) stoppedByEl.innerHTML = `<span class="stopped-by-icon">${getAvatarSvgSafe(currentMonster.id)}</span> ${currentMonster.name}`;
-    
+
     document.getElementById('gameOverRoundScore').innerText = `${score} pt`;
-    document.getElementById('gameOverHighscore').innerText = `${highscore} pt`;
+    const highscoreEl = document.getElementById('gameOverHighscore');
+    if (highscoreEl) highscoreEl.innerText = `${highscore} pt`;
 
     renderAvatar(getPlayerAvatarId(), '#gameOverAvatarContainer');
     updateBuffIcons();
 
     document.getElementById('gameOverScreen')?.classList.remove('hidden');
+}
+
+function checkNewAreaUnlocked(previousTotal) {
+    const newlyUnlocked = worldLocations.find(loc => previousTotal < loc.req && totalScore >= loc.req);
+    
+    if (newlyUnlocked) {
+        // Kaller din nye, styled seiersskjerm i stedet for alert
+        showUnlockedLocationScreen(newlyUnlocked, totalScore);
+        return true;
+    }
+    return false;
 }
 
 // Eksponer funksjoner til globalt scope
@@ -940,10 +1161,13 @@ Object.assign(window, {
     pauseGame,
     resumeGame,
     startGame,
-    checkAnswer
+    checkAnswer,
+    showMapScreen
 });
 
-// Initiell kjøring
-updateStats();
-updateMenuDisplay();
-updateBuffIcons();
+// Initialisering ved lasting av skjermen
+document.addEventListener('DOMContentLoaded', () => {
+    updateStats();
+    showMapScreen();
+    updateBuffIcons();
+});
